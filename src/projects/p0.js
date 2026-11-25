@@ -1,4 +1,54 @@
 // Phase 0 project: Sales Insights Pipeline
+import { B, Tl, O, Z, L } from '../kit.js';
+
+const money = (lakh) => (lakh >= 100 ? `₹${(lakh / 100).toFixed(2)} Cr` : `₹${lakh.toFixed(1)} lakh`);
+
+// ---------- stress-lab model (illustrative figures) ----------
+function outcome(on, guarded) {
+  const base = 142 * (on.diwali ? 6 : 1), daily = base / 7;
+  const r = { truth: money(base) };
+  if (!guarded) {
+    if (on.rename) return { ...r, gmv: '—', status: 'Pipeline crashes: KeyError \'amount\'. No report today.', bad: true, run: '—' };
+    const g = base - (on.empty ? daily : 0) + (on.dup ? daily : 0);
+    const notes = [];
+    if (on.empty) notes.push('a missing day looks like a 14% sales drop');
+    if (on.dup) notes.push('one day counted twice');
+    return { ...r, gmv: money(g), status: notes.length ? `Wrong, silently: ${notes.join('; ')}.` : 'Correct.', bad: notes.length > 0, run: on.diwali ? '≈ 9 min, 7.5 GB peak: over budget' : '≈ 90 s, 1.3 GB' };
+  }
+  if (on.rename) return { ...r, gmv: 'last good report kept', status: 'Schema check rejects the file at the door; alert names the renamed column.', bad: false, run: '—' };
+  const notes = [];
+  if (on.empty) notes.push('1 Nov has 0 rows: week marked incomplete, alert sent');
+  if (on.dup) notes.push('repeat file skipped, logged');
+  return { ...r, gmv: money(base - (on.empty ? daily : 0)) + (on.empty ? ' (6 of 7 days)' : ''), status: notes.length ? `Handled: ${notes.join('; ')}.` : 'Correct.', bad: false, run: on.diwali ? '≈ 70 s, 1.6 GB (DuckDB, incremental)' : '≈ 15 s, 0.4 GB' };
+}
+
+function stressState(on, guarded) {
+  const big = on.diwali ? 0.55 : 0.14;
+  const s = {
+    zone: Z(guarded ? 'pipeline with L2/L3 guards' : 'pipeline without guards', 5.0, 2.7, 13.0, 10.0, { c: guarded ? 'teal' : 'slate' }),
+    f0: Tl(on.empty ? 'Nov 1 · empty' : 'Nov 1', 0, -0.8, { c: on.empty ? 'coral' : 'blue', w: 2.0, d: 1.0, h: on.empty ? 0.05 : big, fs: 9.5 }),
+    f1: Tl(on.rename ? 'Nov 2 · renamed' : 'Nov 2', 0, 1.5, { c: on.rename ? 'coral' : 'blue', w: 2.0, d: 1.0, h: big, fs: 9 }),
+    f2: Tl('Nov 3', 0, 3.8, { c: 'blue', w: 2.0, d: 1.0, h: big, fs: 9.5 }),
+    fd: on.dup ? Tl('Nov 2 · again', 0, 6.1, { c: 'coral', w: 2.0, d: 1.0, h: big, fs: 9 }) : null,
+    load: B(on.diwali && guarded ? 'DuckDB\nincremental' : 'load', 3.2, 2.4, { c: on.diwali && !guarded ? 'coral' : 'teal', w: 1.4, d: 1.2, h: 0.8, fs: 9.5 }),
+    gate: guarded ? B('checks', 5.6, 2.4, { c: 'teal', w: 1.1, d: 1.6, h: 1.0, fs: 10, hl: on.dup || on.empty || on.rename ? 1 : 0 }) : null,
+    kpi: B('KPIs', 7.9, 2.4, { c: 'teal', w: 1.2, d: 1.2, h: 0.7, fs: 10 }),
+    q: guarded ? Tl(on.dup || on.rename ? 'quarantine\n1 file' : 'quarantine\nempty', 5.6, 5.6, { c: on.dup || on.rename ? 'coral' : 'slate', w: 1.7, d: 0.9, fs: 9 }) : null,
+    al: (guarded && (on.empty || on.rename)) || (!guarded && on.rename) ? O(5.6, -0.8, { z: 0.6, r: 0.22, c: 'coral', hl: 1, sub: guarded ? 'alert sent' : 'crash' }) : null,
+  };
+  const res = outcome(on, guarded);
+  s.rep = Tl(res.gmv === '—' ? 'no report' : 'report', 10.3, 2.4, { c: res.bad ? 'coral' : 'green', w: 1.6, d: 1.2, fs: 10 });
+  const l = {
+    a0: L('f0', 'load', { c: on.empty ? 'coral' : 'muted', na: 1 }), a1: L('f1', 'load', { c: on.rename ? 'coral' : 'muted', na: 1 }), a2: L('f2', 'load', { c: 'muted', na: 1 }),
+    ad: on.dup ? L('fd', 'load', { c: 'coral', dash: 1 }) : null,
+    b: guarded ? L('load', 'gate', { flow: 1 }) : L('load', 'kpi', { flow: 1, c: on.dup || on.empty ? 'coral' : 'blue' }),
+    c: guarded ? L('gate', 'kpi', { flow: 1 }) : null,
+    d: L('kpi', 'rep', { flow: 1, c: res.bad ? 'coral' : 'green' }),
+    e: guarded ? L('gate', 'q', { c: on.dup || on.rename ? 'coral' : 'muted', dash: 1 }) : null,
+  };
+  return { s, l };
+}
+
 const GEN = `import numpy as np
 import pandas as pd
 
@@ -239,6 +289,18 @@ export default {
       hint: 'Two guards together: a table of loaded file names, and a primary key on order_id so re-delivered rows under a new file name are ignored.',
     },
   ],
+  stressDefault: { dup: true },
+  stressRows(on) {
+    const a = outcome(on, false), b = outcome(on, true);
+    return [
+      ['True weekly GMV', [a.truth], [b.truth]],
+      ['Reported GMV', [a.gmv, a.bad], [b.gmv]],
+      ['What happened', [a.status, a.bad], [b.status, false, true]],
+      ['Run time and memory (10M rows)', [a.run, !!on.diwali], [b.run]],
+    ];
+  },
+  stressScene: stressState,
+  next: 'Phase 1 turns these trusted numbers into churn and demand forecasts.',
   stress: [
     { id: 'diwali', h: 'Diwali week: 6× orders', p: 'Order volume rises to six times normal.' },
     { id: 'empty', h: 'One day arrives empty', p: 'The 1 November file has headers but no rows.' },

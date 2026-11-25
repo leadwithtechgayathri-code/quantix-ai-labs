@@ -4,62 +4,18 @@ import { B, Tl, O, T, Z, L, esc } from './kit.js';
 import { highlight, renderOutput } from './runner.js';
 import { runInto, OUT } from './lessonview.js';
 
-const TABS = [['brief', 'Brief'], ['studio', 'Engineering Studio'], ['build', 'Build L1–L3'], ['stress', 'Stress lab'], ['review', 'Review and deliver']];
+const tabsFor = (P) => [['brief', 'Brief'], ['studio', 'Engineering Studio'], ['build', 'Build L1–L3'], ['stress', 'Stress lab'], ...(P.sandbox ? [['sandbox', 'System design']] : []), ['review', 'Review and deliver']];
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem('qx:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem('qx:' + k, JSON.stringify(v)); } catch { /* unavailable */ } },
 };
 
-const money = (lakh) => (lakh >= 100 ? `₹${(lakh / 100).toFixed(2)} Cr` : `₹${lakh.toFixed(1)} lakh`);
-
-// ---------- stress-lab model (illustrative figures) ----------
-function outcome(on, guarded) {
-  const base = 142 * (on.diwali ? 6 : 1), daily = base / 7;
-  const r = { truth: money(base) };
-  if (!guarded) {
-    if (on.rename) return { ...r, gmv: '—', status: 'Pipeline crashes: KeyError \'amount\'. No report today.', bad: true, run: '—' };
-    const g = base - (on.empty ? daily : 0) + (on.dup ? daily : 0);
-    const notes = [];
-    if (on.empty) notes.push('a missing day looks like a 14% sales drop');
-    if (on.dup) notes.push('one day counted twice');
-    return { ...r, gmv: money(g), status: notes.length ? `Wrong, silently: ${notes.join('; ')}.` : 'Correct.', bad: notes.length > 0, run: on.diwali ? '≈ 9 min, 7.5 GB peak: over budget' : '≈ 90 s, 1.3 GB' };
-  }
-  if (on.rename) return { ...r, gmv: 'last good report kept', status: 'Schema check rejects the file at the door; alert names the renamed column.', bad: false, run: '—' };
-  const notes = [];
-  if (on.empty) notes.push('1 Nov has 0 rows: week marked incomplete, alert sent');
-  if (on.dup) notes.push('repeat file skipped, logged');
-  return { ...r, gmv: money(base - (on.empty ? daily : 0)) + (on.empty ? ' (6 of 7 days)' : ''), status: notes.length ? `Handled: ${notes.join('; ')}.` : 'Correct.', bad: false, run: on.diwali ? '≈ 70 s, 1.6 GB (DuckDB, incremental)' : '≈ 15 s, 0.4 GB' };
-}
-
-function stressState(on, guarded) {
-  const big = on.diwali ? 0.55 : 0.14;
-  const s = {
-    zone: Z(guarded ? 'pipeline with L2/L3 guards' : 'pipeline without guards', 5.0, 2.7, 13.0, 10.0, { c: guarded ? 'teal' : 'slate' }),
-    f0: Tl(on.empty ? 'Nov 1 · empty' : 'Nov 1', 0, -0.8, { c: on.empty ? 'coral' : 'blue', w: 2.0, d: 1.0, h: on.empty ? 0.05 : big, fs: 9.5 }),
-    f1: Tl(on.rename ? 'Nov 2 · renamed' : 'Nov 2', 0, 1.5, { c: on.rename ? 'coral' : 'blue', w: 2.0, d: 1.0, h: big, fs: 9 }),
-    f2: Tl('Nov 3', 0, 3.8, { c: 'blue', w: 2.0, d: 1.0, h: big, fs: 9.5 }),
-    fd: on.dup ? Tl('Nov 2 · again', 0, 6.1, { c: 'coral', w: 2.0, d: 1.0, h: big, fs: 9 }) : null,
-    load: B(on.diwali && guarded ? 'DuckDB\nincremental' : 'load', 3.2, 2.4, { c: on.diwali && !guarded ? 'coral' : 'teal', w: 1.4, d: 1.2, h: 0.8, fs: 9.5 }),
-    gate: guarded ? B('checks', 5.6, 2.4, { c: 'teal', w: 1.1, d: 1.6, h: 1.0, fs: 10, hl: on.dup || on.empty || on.rename ? 1 : 0 }) : null,
-    kpi: B('KPIs', 7.9, 2.4, { c: 'teal', w: 1.2, d: 1.2, h: 0.7, fs: 10 }),
-    q: guarded ? Tl(on.dup || on.rename ? 'quarantine\n1 file' : 'quarantine\nempty', 5.6, 5.6, { c: on.dup || on.rename ? 'coral' : 'slate', w: 1.7, d: 0.9, fs: 9 }) : null,
-    al: (guarded && (on.empty || on.rename)) || (!guarded && on.rename) ? O(5.6, -0.8, { z: 0.6, r: 0.22, c: 'coral', hl: 1, sub: guarded ? 'alert sent' : 'crash' }) : null,
-  };
-  const res = outcome(on, guarded);
-  s.rep = Tl(res.gmv === '—' ? 'no report' : 'report', 10.3, 2.4, { c: res.bad ? 'coral' : 'green', w: 1.6, d: 1.2, fs: 10 });
-  const l = {
-    a0: L('f0', 'load', { c: on.empty ? 'coral' : 'muted', na: 1 }), a1: L('f1', 'load', { c: on.rename ? 'coral' : 'muted', na: 1 }), a2: L('f2', 'load', { c: 'muted', na: 1 }),
-    ad: on.dup ? L('fd', 'load', { c: 'coral', dash: 1 }) : null,
-    b: guarded ? L('load', 'gate', { flow: 1 }) : L('load', 'kpi', { flow: 1, c: on.dup || on.empty ? 'coral' : 'blue' }),
-    c: guarded ? L('gate', 'kpi', { flow: 1 }) : null,
-    d: L('kpi', 'rep', { flow: 1, c: res.bad ? 'coral' : 'green' }),
-    e: guarded ? L('gate', 'q', { c: on.dup || on.rename ? 'coral' : 'muted', dash: 1 }) : null,
-  };
-  return { s, l };
-}
-
 export function renderProject(root, P, ctx) {
+  const TABS = tabsFor(P);
+  const num = (k) => TABS.findIndex(([x]) => x === k) + 1;
+  const defOn = () => store.get(`proj:${P.id}:stress`, P.stressDefault || {});
+  const allOn = Object.fromEntries(P.stress.map((x) => [x.id, 1]));
   let tab = store.get(`proj:${P.id}:tab`, 'brief');
   const checks = new Set(store.get(`proj:${P.id}:checks`, []));
   root.innerHTML = `<article class="lesson project-page">
@@ -128,24 +84,37 @@ export function renderProject(root, P, ctx) {
       ${pnav('build')}`;
     },
     stress() {
-      const on = store.get(`proj:${P.id}:stress`, { dup: true });
+      const on = defOn();
       const g = store.get(`proj:${P.id}:guard`, true);
-      const a = outcome(on, false), b = outcome(on, true);
-      return `<div class="lhead"><h2>4. Stress lab</h2><p>Turn on the bad days and compare a naive pipeline with a guarded one</p></div>
+      const rows = P.stressRows(on);
+      const [ca, cb] = P.stressCols || ['Without guards', 'With L2/L3 guards'];
+      const cell = ([v, bad, good]) => `<td class="${bad ? 'badc' : good ? 'goodc' : ''}">${esc(v)}</td>`;
+      return `<div class="lhead"><h2>${num('stress')}. Stress lab</h2><p>${esc(P.stressSub || 'Turn on the bad days and compare a naive pipeline with a guarded one')}</p></div>
       <div class="howto" style="margin-bottom:12px"><b>How to use</b>Switch scenarios on and off; combine them. The picture shows one pipeline; the table compares both. Figures are illustrative.</div>
       <div class="stresses">${P.stress.map((x) => `<label class="tick"><input type="checkbox" data-st="${x.id}" ${on[x.id] ? 'checked' : ''}><span><b>${esc(x.h)}</b><small>${x.p}</small></span></label>`).join('')}</div>
       <div class="seg" id="guard" role="group" aria-label="Pipeline shown" style="margin:12px 0"><button type="button" data-g="1" aria-pressed="${g}">With guards</button><button type="button" data-g="0" aria-pressed="${!g}">Without guards</button></div>
       <figure class="stage" style="aspect-ratio:16/8"><svg id="st-svg" role="img" aria-label="Pipeline under stress"></svg></figure>
-      <div class="tablewrap"><table class="cmp"><thead><tr><th></th><th>Without guards</th><th>With L2/L3 guards</th></tr></thead><tbody>
-        <tr><th>True weekly GMV</th><td>${a.truth}</td><td>${b.truth}</td></tr>
-        <tr><th>Reported GMV</th><td class="${a.bad ? 'badc' : ''}">${esc(a.gmv)}</td><td>${esc(b.gmv)}</td></tr>
-        <tr><th>What happened</th><td class="${a.bad ? 'badc' : ''}">${esc(a.status)}</td><td class="goodc">${esc(b.status)}</td></tr>
-        <tr><th>Run time and memory (10M rows)</th><td class="${on.diwali ? 'badc' : ''}">${esc(a.run)}</td><td>${esc(b.run)}</td></tr>
+      <div class="tablewrap"><table class="cmp"><thead><tr><th></th><th>${esc(ca)}</th><th>${esc(cb)}</th></tr></thead><tbody>
+        ${rows.map(([h, a, b]) => `<tr><th>${esc(h)}</th>${cell(a)}${cell(b)}</tr>`).join('')}
       </tbody></table></div>
       ${pnav('stress')}`;
     },
+    sandbox() {
+      const S = P.sandbox, v = { ...Object.fromEntries(S.controls.map((c) => [c.id, c.def])), ...store.get(`proj:${P.id}:sbx`, {}) };
+      const r = S.compute(v);
+      return `<div class="lhead"><h2>${num('sandbox')}. System design sandbox</h2><p>${esc(S.sub)}</p></div>
+      <div class="howto" style="margin-bottom:12px"><b>How to use</b>${S.howto}</div>
+      <div class="sbx">${S.controls.map((c) => `<div class="sbxc"><b>${esc(c.label)}</b><div class="seg" role="group" aria-label="${esc(c.label)}">${c.opts.map(([val, lab]) => `<button type="button" data-sb="${c.id}" data-v="${esc(String(val))}" aria-pressed="${String(val) === String(v[c.id])}">${esc(lab)}</button>`).join('')}</div>${c.help ? `<small>${esc(c.help)}</small>` : ''}</div>`).join('')}</div>
+      <figure class="stage" style="aspect-ratio:16/7"><svg id="sb-svg" role="img" aria-label="Nightly scoring pipeline"></svg></figure>
+      <div class="fb ${r.ok ? 'ok' : 'no'}" style="margin:12px 0"><b>${r.ok ? 'Meets the targets' : 'Misses a target'}</b>${esc(r.verdict)}</div>
+      <div class="tablewrap"><table class="cmp"><thead><tr><th>Measure</th><th>Value</th><th>Target</th></tr></thead><tbody>
+        ${r.rows.map(([h, val, tgt, bad]) => `<tr><th>${esc(h)}</th><td class="${bad ? 'badc' : 'goodc'}">${esc(val)}</td><td>${esc(tgt)}</td></tr>`).join('')}
+      </tbody></table></div>
+      ${S.note ? `<p class="runnote">${esc(S.note)}</p>` : ''}
+      ${pnav('sandbox')}`;
+    },
     review() {
-      return `<div class="lhead"><h2>5. Review and deliver</h2><p>Failure drills, design-review questions, and the final checklist</p></div>
+      return `<div class="lhead"><h2>${num('review')}. Review and deliver</h2><p>Failure drills, design-review questions, and the final checklist</p></div>
       <h3 class="subh">Failure drills</h3>
       ${P.drills.map((d) => `<details class="qa"><summary><b>${esc(d.h)}</b> ${esc(d.p)}</summary><p>${esc(d.a)}</p></details>`).join('')}
       <h3 class="subh">Design-review questions</h3>
@@ -153,7 +122,7 @@ export function renderProject(root, P, ctx) {
       <h3 class="subh">Deliverables checklist</h3>
       <div class="ticks">${P.brief.deliverables.map((d, i) => tick(`del:${i}`, esc(d))).join('')}</div>
       <div class="card wide" style="margin-top:16px"><h3>${esc(P.side.h)}</h3><p>${esc(P.side.p)}</p></div>
-      <div class="howto" style="margin-top:16px"><b>What comes next</b>Phase 1 turns these trusted numbers into churn and demand forecasts. It arrives in the next update.</div>
+      <div class="howto" style="margin-top:16px"><b>What comes next</b>${esc(P.next || '')}</div>
       ${pnav('review')}`;
     },
   };
@@ -161,11 +130,20 @@ export function renderProject(root, P, ctx) {
   function drawStress() {
     const svg = root.querySelector('#st-svg');
     if (!svg) return;
-    const on = store.get(`proj:${P.id}:stress`, { dup: true }), g = store.get(`proj:${P.id}:guard`, true);
-    const st = stressState(on, g);
-    const all = buildStates([{ clear: true, ...stressState({ diwali: 1, empty: 1, dup: 1, rename: 1 }, true) }, { clear: true, ...stressState({ diwali: 1, empty: 1, dup: 1, rename: 1 }, false) }]);
+    const on = defOn(), g = store.get(`proj:${P.id}:guard`, true);
+    const st = P.stressScene(on, g);
+    const all = buildStates([{ clear: true, ...P.stressScene(allOn, true) }, { clear: true, ...P.stressScene(allOn, false) }, { clear: true, ...P.stressScene({}, true) }]);
     const cur = buildStates([{ clear: true, s: st.s, l: st.l }])[0];
     if (!scene) { scene = new Scene(svg); scene.frame(bounds(all)); scene.show(cur, { dur: 0 }); } else scene.show(cur, { dur: 500 });
+  }
+
+  function drawSandbox() {
+    const svg = root.querySelector('#sb-svg');
+    if (!svg) return;
+    const S = P.sandbox, v = { ...Object.fromEntries(S.controls.map((c) => [c.id, c.def])), ...store.get(`proj:${P.id}:sbx`, {}) };
+    const all = buildStates(S.frames.map((f) => ({ clear: true, ...S.compute(f).scene })));
+    const cur = buildStates([{ clear: true, ...S.compute(v).scene }])[0];
+    if (!scene) { scene = new Scene(svg); scene.frame(bounds(all)); scene.show(cur, { dur: 0 }); } else scene.show(cur, { dur: 450 });
   }
 
   function go(k, scroll = true) {
@@ -173,6 +151,7 @@ export function renderProject(root, P, ctx) {
     drawTabs();
     body.innerHTML = SECTIONS[k]();
     if (k === 'stress') drawStress();
+    if (k === 'sandbox') drawSandbox();
     if (scroll) tabsEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   tabsEl.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) go(b.dataset.k); });
@@ -180,12 +159,20 @@ export function renderProject(root, P, ctx) {
     const c = e.target.closest('[data-c]');
     if (c) { c.checked ? checks.add(c.dataset.c) : checks.delete(c.dataset.c); store.set(`proj:${P.id}:checks`, [...checks]); if (tab === 'build') { const y = window.scrollY; go('build', false); window.scrollTo(0, y); } }
     const s = e.target.closest('[data-st]');
-    if (s) { const on = store.get(`proj:${P.id}:stress`, { dup: true }); on[s.dataset.st] = s.checked; store.set(`proj:${P.id}:stress`, on); const y = window.scrollY; const keep = scene; body.innerHTML = SECTIONS.stress(); scene = null; drawStressKeep(keep); window.scrollTo(0, y); }
+    if (s) { const on = defOn(); on[s.dataset.st] = s.checked; store.set(`proj:${P.id}:stress`, on); const y = window.scrollY; const keep = scene; body.innerHTML = SECTIONS.stress(); scene = null; drawStressKeep(keep); window.scrollTo(0, y); }
   });
   function drawStressKeep() { drawStress(); }
   body.addEventListener('click', async (e) => {
     const go2 = e.target.closest('[data-go]'); if (go2) return go(go2.dataset.go);
     const lv = e.target.closest('[data-lv]'); if (lv) { store.set(`proj:${P.id}:level`, lv.dataset.lv); return go('build', false); }
+    const sb = e.target.closest('[data-sb]');
+    if (sb) {
+      const cur = store.get(`proj:${P.id}:sbx`, {}), c = P.sandbox.controls.find((x) => x.id === sb.dataset.sb);
+      const raw = sb.dataset.v; cur[c.id] = typeof c.def === 'number' ? +raw : raw; store.set(`proj:${P.id}:sbx`, cur);
+      const y = window.scrollY, keep = scene; body.innerHTML = SECTIONS.sandbox(); scene = keep; const svg = root.querySelector('#sb-svg');
+      if (keep) { const old = keep.svg; if (old && old !== svg) svg.replaceWith(old); }
+      drawSandbox(); window.scrollTo(0, y); return;
+    }
     const gb = e.target.closest('[data-g]'); if (gb) { store.set(`proj:${P.id}:guard`, gb.dataset.g === '1'); root.querySelectorAll('#guard button').forEach((x) => x.setAttribute('aria-pressed', String(x === gb))); return drawStress(); }
     const ch = e.target.closest('[data-ch]');
     if (ch) {

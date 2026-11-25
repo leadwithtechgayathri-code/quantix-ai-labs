@@ -14,6 +14,8 @@ export const MANIFEST = {
     project: { id: 'p0-project', title: 'Project: Sales Insights Pipeline' },
   },
   p1: {
-    ready: range('p1', 11),
+    ready: range('p1', 22),
+    story: { id: 'p1-story', title: 'Story: Priya quietly stops ordering' },
+    project: { id: 'p1-project', title: 'Project: Churn and Demand Forecasting' },
   },
 };

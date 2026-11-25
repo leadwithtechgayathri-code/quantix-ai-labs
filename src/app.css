@@ -151,6 +151,11 @@ details.qa p { margin: 6px 0 2px; color: var(--ink) }
 .tick small { display: block; color: var(--muted); font-size: 13.5px; font-weight: 400 }
 .tick:has(input:checked) { border-color: color-mix(in srgb, var(--good) 55%, transparent); background: color-mix(in srgb, var(--good) 10%, var(--card)) }
 .stresses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.sbx { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px }
+.sbxc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0 }
+.sbxc .seg { display: flex; flex-wrap: wrap; margin-top: 8px }
+.sbxc small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 6px }
+@media (max-width: 720px) { .sbx { grid-template-columns: 1fr } }
 .hint { margin: 10px 0 0; font-size: 14.5px; color: var(--muted) }
 ul.plain { list-style: none; padding: 0 }
 ul.plain li { margin: 0 0 8px }
