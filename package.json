@@ -1,0 +1,23 @@
+{
+  "name": "quantix-ai-labs",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Quantix AI Labs by ProDev Quantix: an interactive AI roadmap from foundations to agent harnesses.",
+  "author": "Gayathridevi M (https://www.linkedin.com/in/gayathridevi-manojkumar)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "check": "node tools/check.mjs",
+    "build": "node tools/check.mjs && vite build",
+    "build:single": "node tools/check.mjs && vite build --mode single",
+    "preview": "vite preview",
+    "outputs": "node tools/dump.mjs | python3 tools/run.py"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8",
+    "vite-plugin-singlefile": "^2.3.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

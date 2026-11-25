@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantix AI Labs</title>
+  <meta name="description" content="Learn AI the way industry builds it: concept, maths, code, industry lens and practice in every lesson.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+</head>
+<body>
+  <header class="top">
+    <button class="icon-btn" id="menu" type="button" aria-label="Open course contents" aria-expanded="false" aria-controls="side">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <a class="brand" href="#home" aria-label="Quantix AI Labs home">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 30 10.5 17 18 4 10.5Z" fill="#4a56ec"/><path d="M4 10.5 17 18v13L4 23.5Z" fill="#1d29b4"/><path d="M30 10.5 17 18v13l13-7.5Z" fill="#2c39d9"/><circle cx="17" cy="10.5" r="3.2" fill="#ff7a5c"/></svg>
+      <span><b>Quantix AI Labs</b><small>by ProDev Quantix</small></span>
+    </a>
+    <div class="lvl" role="group" aria-label="Depth: which lesson layers to show">
+      <button type="button" data-level="simple" aria-pressed="false" title="Concept, industry lens and practice">Simple</button>
+      <button type="button" data-level="code" aria-pressed="false" title="Adds the code layer">+ Code</button>
+      <button type="button" data-level="math" aria-pressed="true" title="All five layers">+ Math</button>
+    </div>
+    <a class="author" href="https://www.linkedin.com/in/gayathridevi-manojkumar" target="_blank" rel="noopener" aria-label="Gayathridevi M on LinkedIn (opens in a new tab)">
+      <span class="author-in" aria-hidden="true">in</span><span class="author-txt"><b>Gayathridevi M</b><small>LinkedIn profile</small></span>
+    </a>
+  </header>
+  <div class="shell">
+    <aside class="side" id="side" aria-label="Course roadmap">
+      <input class="search" id="q" type="search" placeholder="Search lessons" aria-label="Search lessons" autocomplete="off">
+      <nav id="toc"></nav>
+    </aside>
+    <main id="main"></main>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
