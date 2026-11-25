@@ -31,12 +31,19 @@ export async function runPython(code, status = () => {}) {
   if (failed) throw new Error('unavailable');
   try {
     if (!py) { loading = loading || boot(status); py = await loading; }
-    const need = ['numpy', 'pandas', 'matplotlib', 'scipy', 'sympy', 'duckdb'].filter((m) => new RegExp(`\\b(import|from)\\s+${m}`).test(code));
-    if (need.length) { status(`Loading ${need.join(', ')}…`); await py.loadPackage(need); }
-    if (code.includes('matplotlib')) await py.runPythonAsync('import matplotlib\nmatplotlib.use("AGG")');
   } catch (e) {
     failed = true; loading = null;
     throw new Error('unavailable');
+  }
+  // import name → Pyodide package name
+  const PKG = { numpy: 'numpy', pandas: 'pandas', matplotlib: 'matplotlib', scipy: 'scipy', sympy: 'sympy', duckdb: 'duckdb', sklearn: 'scikit-learn' };
+  const need = Object.keys(PKG).filter((m) => new RegExp(`\\b(import|from)\\s+${m}`).test(code)).map((m) => PKG[m]);
+  try {
+    if (need.length) { status(`Loading ${need.join(', ')}…`); await py.loadPackage(need); }
+    if (code.includes('matplotlib')) await py.runPythonAsync('import matplotlib\nmatplotlib.use("AGG")');
+  } catch (e) {
+    // one missing package should not disable the runner for every other lesson
+    return { ok: false, text: `This example needs ${need.join(', ')}, which could not be loaded in the browser. The checked output above shows what it prints.` };
   }
   const out = [];
   py.setStdout({ batched: (s) => out.push(s) });
