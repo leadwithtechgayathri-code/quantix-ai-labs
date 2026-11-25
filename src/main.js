@@ -113,18 +113,19 @@ import { LOADERS, MANIFEST } from './phases/manifest.js';
     leave();
     view = { id: null, layer: 'concept', api: null };
     document.title = 'Quantix AI Labs';
-    const nextUp = READY.find((x) => !done.has(x.id)) || READY[0];
+    const MAIN = READY.filter((x) => x.ph.n !== 'W');
+    const nextUp = MAIN.find((x) => !done.has(x.id)) || MAIN[0];
     $('#main').innerHTML = `
     <section class="hero"><div class="hero-in">
       <div><h1>Learn AI the way industry builds it</h1>
         <p>A roadmap from foundations to agent harnesses: 172 lessons in 9 phases. Every lesson gives you the concept, the maths, the code three ways, how industry uses it, and practice. Every phase ends with a real ShopSense project.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#${done.size ? nextUp.id : 'p0-story'}">${done.size ? 'Continue: ' + esc(nextUp.title) : 'Start Phase 0'}</a><a class="btn" href="#roadmap">See the roadmap</a></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#${done.size ? nextUp.id : 'p0-story'}">${done.size ? 'Continue: ' + esc(nextUp.title) : 'Start Phase 0'}</a><a class="btn" href="#w-01">New to Python? Start the warm-up</a><a class="btn" href="#roadmap">See the roadmap</a></div></div>
       <div class="layers">${[['1', 'Concept', 'An animated, step-by-step explanation'], ['2', 'Maths', 'Formulas with a worked example'], ['3', 'Code', 'From scratch, with the library, production style'], ['4', 'Industry lens', 'Baselines, tools, trade-offs, failures, interviews'], ['5', 'Practice', 'Quiz with explanations, auto-checked exercise']].map(([n, h, p]) => `<div class="layer"><span class="n">${n}</span><div><h3>${h}</h3><p>${p}</p></div></div>`).join('')}</div>
     </div></section>
     <section class="sec" id="roadmap"><div class="sec-in">
       <p class="kicker">The roadmap</p><h2>Nine phases, one growing project</h2>
       <div class="intro"><p>Phases build on each other. Each one adds a feature to ShopSense, an AI-powered e-commerce platform, built to industry standards: make it work, make it robust, make it scale.</p>
-      <div class="howto"><b>Available now</b>Phase 0 in full: the story scene, 20 lessons and the Sales Insights Pipeline project. Greyed phases are planned and arrive release by release.</div></div>
+      <div class="howto"><b>Available now</b>Phases 0 and 1 in full, each with its story scene, every lesson and its ShopSense project, plus an optional 10-lesson Python warm-up for anyone new to Python. Greyed phases are planned and arrive release by release.</div></div>
       <div class="roadmap">${PHASES.filter((p) => p.n !== 'W').map((p) => {
         const items = ORDER.filter((x) => x.ph === p), ready = items.filter((x) => x.ready), first = ready[0];
         const n = items.filter((x) => done.has(x.id)).length;

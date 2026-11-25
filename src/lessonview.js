@@ -17,12 +17,12 @@ const CODE_TABS = [['scratch', 'From scratch', 'Plain Python, to see the mechani
 const $ = (s, r = document) => r.querySelector(s);
 
 export function renderLesson(root, L, ctx) {
-  const visible = LAYERS.filter(([k]) => SHOW[ctx.level].includes(k));
+  const visible = LAYERS.map(([k, n, h]) => (L.layerNames?.[k] ? [k, ...L.layerNames[k]] : [k, n, h])).filter(([k]) => SHOW[ctx.level].includes(k));
   let layer = visible.some(([k]) => k === ctx.layer) ? ctx.layer : visible[0][0];
   const seen = new Set();
   root.innerHTML = `
   <article class="lesson">
-    <div class="crumbs"><b>Phase ${esc(L.phaseN)} · ${esc(L.phaseName)}</b> · Lesson ${esc(L.ref)}</div>
+    <div class="crumbs"><b>${L.phaseN === 'W' ? '' : `Phase ${esc(L.phaseN)} · `}${esc(L.phaseName)}</b> · Lesson ${esc(L.ref)}</div>
     <h1>${esc(L.title)}</h1>
     <p class="lede">${esc(L.sub)}</p>
     <div class="start">
@@ -81,7 +81,7 @@ function concept(el, L, ctx) {
     $('#c-title', el).textContent = s.t;
     $('#c-body', el).innerHTML = s.b.map((p) => `<p>${p}</p>`).join('') + (s.n ? `<div class="notice${s.warn ? ' warn' : ''}"><b>What to notice</b>${s.n}</div>` : '');
     $('#c-prev', el).disabled = i === 0;
-    $('#c-next', el).textContent = i === L.steps.length - 1 ? 'Next: the maths →' : 'Next step →';
+    $('#c-next', el).textContent = i === L.steps.length - 1 ? `Next: ${(L.layerNames?.math?.[0] || 'the maths').toLowerCase()} →` : 'Next step →';
   };
   const step = (d) => {
     if (i + d >= L.steps.length) { el.closest('#layer').querySelector('.pnav [data-go], .pnav a')?.click(); return; }
@@ -107,7 +107,7 @@ function math(el, L) {
 // ---------- 3. Code ----------
 function code(el, L) {
   let tab = 'scratch';
-  el.innerHTML = `<div class="ctabs" role="group" aria-label="Code version">${CODE_TABS.map(([k, n, d]) => `<button type="button" data-t="${k}" aria-pressed="${k === tab}"><b>${esc(n)}</b><span>${esc(d)}</span></button>`).join('')}</div><div id="cbox"></div>`;
+  el.innerHTML = `<div class="ctabs" role="group" aria-label="Code version">${(L.codeTabs || CODE_TABS).map(([k, n, d]) => `<button type="button" data-t="${k}" aria-pressed="${k === tab}"><b>${esc(n)}</b><span>${esc(d)}</span></button>`).join('')}</div><div id="cbox"></div>`;
   const box = $('#cbox', el);
   const draw = () => {
     const c = L.code[tab];
