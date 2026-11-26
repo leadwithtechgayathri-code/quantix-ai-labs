@@ -187,3 +187,13 @@ table.cmp tr:last-child th, table.cmp tr:last-child td { border-bottom: 0 }
 .story-page .ph-card i { height: 2.4em; width: 6px; border-radius: 3px }
 @media (max-width: 600px) { .project-page figure.stage { aspect-ratio: 4 / 3.2 !important } }
 .loading { max-width: 760px; margin: 60px auto; padding: 0 20px; color: var(--muted); font-size: 16px }
+
+/* next-release ribbon */
+.ribbon { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 7px 16px; background: #1d2bd8; color: #fff; font-size: 14px; text-align: center }
+.ribbon b { font-weight: 600 }
+.ribbon a { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px }
+.ribbon .rsoon { opacity: .85 }
+.ribbon .pulse { width: 9px; height: 9px; border-radius: 50%; background: #ffd34d; box-shadow: 0 0 0 0 rgb(255 211 77 / .8); animation: qx-pulse 1.4s ease-out infinite; flex: none }
+@keyframes qx-pulse { 0% { box-shadow: 0 0 0 0 rgb(255 211 77 / .8); opacity: 1 } 70% { box-shadow: 0 0 0 9px rgb(255 211 77 / 0); opacity: .55 } 100% { box-shadow: 0 0 0 0 rgb(255 211 77 / 0); opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .ribbon .pulse { animation: none } }
+@media (max-width: 600px) { .ribbon { font-size: 13px } .ribbon .rsoon { display: none } }

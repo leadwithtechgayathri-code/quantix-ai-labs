@@ -1,4 +1,5 @@
 import './base.css';
+import { NEXT } from './release.js';
 import './app.css';
 import { PHASES, lessonCode, lessonId } from './roadmap.js';
 import { renderLesson, registerOutputs } from './lessonview.js';
@@ -67,6 +68,13 @@ import { LOADERS, MANIFEST } from './phases/manifest.js';
   }
   document.querySelectorAll('.lvl button').forEach((b) => b.addEventListener('click', () => setLevel(b.dataset.level)));
 
+  // ---------- next-release ribbon ----------
+  const rib = $('#ribbon');
+  if (rib && NEXT?.text) {
+    rib.innerHTML = `<span class="pulse" aria-hidden="true"></span><b>${esc(NEXT.text)}</b>${NEXT.url ? ` <a href="${esc(NEXT.url)}" target="_blank" rel="noopener">${esc(NEXT.cta || 'Open')} →</a>` : '<span class="rsoon">in the next release</span>'}`;
+    rib.hidden = false;
+  }
+
   // ---------- sidebar ----------
   const side = $('#side'), menu = $('#menu');
   const toggleMenu = (open) => { side.classList.toggle('open', open); menu.setAttribute('aria-expanded', String(open)); };
@@ -76,6 +84,7 @@ import { LOADERS, MANIFEST } from './phases/manifest.js';
     const cur = view.id && (ORDER.find((x) => x.id === view.id)?.ph.n ?? EXTRAS[view.id]?.phaseN);
     let html = '';
     for (const ph of PHASES) {
+      if (!ORDER.some((x) => x.ph === ph && x.ready)) continue;          // unreleased phases live on the roadmap only
       const items = ORDER.filter((x) => x.ph === ph && (!q || x.title.toLowerCase().includes(q)));
       if (!items.length) continue;
       const ready = items.filter((x) => x.ready).length;
